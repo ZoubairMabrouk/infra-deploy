@@ -82,7 +82,7 @@ services:
   gateway:
     image: ghcr.io/zoubairmabrouk/gateway-service:${GATEWAY_VERSION}
     ports:
-      - "8080:8080"           # seul port exposé vers l'extérieur
+      - "8090:8080"           # seul port exposé vers l'extérieur
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       Jwt__SecretKey: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
