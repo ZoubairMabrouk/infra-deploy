@@ -64,6 +64,12 @@ jobs:
 
             echo "${{ secrets.GHCR_TOKEN }}" | sudo docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             
+            echo "── Stopping current stack ──"
+            sudo docker compose --env-file .env.prod -f docker-compose.prod.yml down
+
+            echo "── Deleting old images ──"
+            sudo docker image prune -f
+            
             echo "── Pulling Docker images ──"
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml pull
 
