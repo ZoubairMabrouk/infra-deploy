@@ -34,7 +34,7 @@ services:
       ConnectionStrings__DefaultConnection: >
         Server=sqlserver,1433;Database=AuthDb;
         User Id=sa;Password=Zoubair@123;TrustServerCertificate=True
-      Jwt__SecretKey:                "${JWT_SECRET_KEY}"
+      Jwt__SecretKey:                "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
       Jwt__Issuer:                   "auth-service"
       Jwt__Audience:                 "microservices"
       Jwt__AccessTokenExpiryMinutes: "15"
@@ -60,7 +60,7 @@ services:
       ConnectionStrings__DefaultConnection: >
         Server=sqlserver,1433;Database=MdxDb;
         User Id=sa;Password=Zoubair@123;TrustServerCertificate=True
-      Jwt__SecretKey: "${JWT_SECRET_KEY}"
+      Jwt__SecretKey: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
       Jwt__Issuer:    "auth-service"
       Jwt__Audience:  "microservices"
     networks:
@@ -80,7 +80,7 @@ services:
     expose:
       - "8000"
     environment:
-      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
+      JWT_SECRET_KEY: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
       JWT_ISSUER:     "auth-service"
       JWT_AUDIENCE:   "microservices"
     networks:
@@ -93,7 +93,7 @@ services:
       - "8080:8080"           # seul port exposé vers l'extérieur
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__SecretKey: "${JWT_SECRET_KEY}"
+      Jwt__SecretKey: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
       Jwt__Issuer:    "auth-service"
       Jwt__Audience:  "microservices"
     networks:
