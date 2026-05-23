@@ -68,7 +68,7 @@ jobs:
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml pull
 
             echo "── Saving current stack state for rollback ──"
-            cp .env.prod .env.prod.bak
+            sudo cp .env.prod .env.prod.bak
 
             echo "── Starting new stack ──"
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml \
@@ -80,7 +80,7 @@ jobs:
               | grep -v '"Health":"healthy"' | grep '"State":"running"' \
               && echo "All containers running" || (
                 echo "❌ Healthcheck failed — rolling back"
-                cp .env.prod.bak .env.prod
+                sudo cp .env.prod.bak .env.prod
                 sudo docker compose --env-file .env.prod -f docker-compose.prod.yml \
                   up -d --remove-orphans
                 exit 1
