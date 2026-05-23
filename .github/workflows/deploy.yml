@@ -1,0 +1,87 @@
+# infra-deploy/.github/workflows/deploy.yml
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.env.prod'
+      - 'docker-compose.prod.yml'
+
+  # Bonus : déclenchement manuel avec approbation prod
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Raison du déploiement manuel'
+        required: false
+        default: 'manual trigger'
+
+# Protection prod : approbation requise via GitHub Environments
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout infra-deploy
+        uses: actions/checkout@v4
+
+      - name: Read versions
+        id: versions
+        run: |
+          source .env.prod
+          echo "auth=$AUTH_VERSION"       >> $GITHUB_OUTPUT
+          echo "mdx=$MDX_VERSION"         >> $GITHUB_OUTPUT
+          echo "rag=$AI_VERSION"           >> $GITHUB_OUTPUT
+          echo "gateway=$GATEWAY_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key:      ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/deploy
+
+            echo "── Pulling latest infra config ──"
+            git pull origin main
+
+            echo "── Pulling Docker images ──"
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+
+            echo "── Saving current stack state for rollback ──"
+            cp .env.prod .env.prod.bak
+
+            echo "── Starting new stack ──"
+            docker compose --env-file .env.prod -f docker-compose.prod.yml \
+              up -d --remove-orphans --wait --wait-timeout 120
+
+            echo "── Healthcheck ──"
+            sleep 10
+            docker compose --env-file .env.prod -f docker-compose.prod.yml ps --format json \
+              | grep -v '"Health":"healthy"' | grep '"State":"running"' \
+              && echo "All containers running" || (
+                echo "❌ Healthcheck failed — rolling back"
+                cp .env.prod.bak .env.prod
+                docker compose --env-file .env.prod -f docker-compose.prod.yml \
+                  up -d --remove-orphans
+                exit 1
+              )
+
+            echo "── Cleanup old images ──"
+            docker image prune -f
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Deployed successfully"
+          echo "  auth-service  : ${{ steps.versions.outputs.auth }}"
+          echo "  mdx-service   : ${{ steps.versions.outputs.mdx }}"
+          echo "  rag-service    : ${{ steps.versions.outputs.rag }}"
+          echo "  gateway       : ${{ steps.versions.outputs.gateway }}"
+
+      - name: Notify failure
+        if: failure()
+        run: echo "❌ Deployment failed — check logs above"
