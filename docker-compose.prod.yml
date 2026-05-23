@@ -18,13 +18,7 @@ services:
     networks:
       - microservices-net
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd",
-             "-S", "localhost", "-U", "sa", "-P", "Zoubair@123", "-Q", "SELECT 1"]
-      interval: 10s
-      retries: 10
-      start_period: 30s
-
+    
   auth-service:
     image: ghcr.io/zoubairmabrouk/auth-service:${AUTH_VERSION}
     expose:
@@ -42,14 +36,13 @@ services:
     networks:
       - microservices-net
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      - sqlserver
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    #   interval: 15s
+    #   timeout: 5s
+    #   retries: 5
 
   mdx-service:
     image: ghcr.io/zoubairmabrouk/mdx-service:${MDX_VERSION}
@@ -66,14 +59,13 @@ services:
     networks:
       - microservices-net
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      - sqlserver
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    #   interval: 15s
+    #   timeout: 5s
+    #   retries: 5
 
   rag-service:
     image: ghcr.io/zoubairmabrouk/rag-service:${AI_VERSION}
@@ -103,6 +95,28 @@ services:
       - mdx-service
       - rag-service
     restart: unless-stopped
+  conv-service:
+    image: ghcr.io/zoubairmabrouk/conv-service:${CONV_VERSION}
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >
+        Server=sqlserver,1433;Database=ConvDb;
+        User Id=sa;Password=Zoubair@123;TrustServerCertificate=True
+      Jwt__SecretKey: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
+      Jwt__Issuer:    "auth-service"
+      Jwt__Audience:  "microservices"
+    networks:
+      - microservices-net
+    depends_on:
+      - sqlserver
+    restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    #   interval: 15s
+    #   timeout: 5s
+    #   retries: 5
 
 volumes:
   sqlserver-data:
