@@ -7,6 +7,7 @@ on:
     paths:
       - '.env.prod'
       - 'docker-compose.prod.yml'
+      - '.github/workflows/deploy.yml'
 
   # Bonus : déclenchement manuel avec approbation prod
   workflow_dispatch:
@@ -47,8 +48,18 @@ jobs:
             cd /opt/deploy
 
             echo "── Pulling latest infra config ──"
-            sudo git pull origin main
+            if [ ! -d ".git" ]; then
+              echo "Repository absent → clone initial"
 
+              sudo git clone https://github.com/ZoubairMabrouk/infra-deploy.git .
+
+            else
+              echo "Repository existant → pull"
+
+              sudo git reset --hard
+              sudo git clean -fd
+              sudo git pull origin main
+            fi
             echo "── Pulling Docker images ──"
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml pull
 
