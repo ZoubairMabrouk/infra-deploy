@@ -9,7 +9,7 @@ services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      SA_PASSWORD: "Zoubair@123"
+      SA_PASSWORD: "${SQL_SA_PASSWORD}"
       ACCEPT_EULA: "Y"
     volumes:
       - sqlserver-data:/var/opt/mssql
@@ -18,7 +18,7 @@ services:
     networks:
       - microservices-net
     restart: unless-stopped
-    
+
   auth-service:
     image: ghcr.io/zoubairmabrouk/auth-service:${AUTH_VERSION}
     expose:
@@ -27,10 +27,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
         Server=sqlserver,1433;Database=AuthDb;
-        User Id=sa;Password=Zoubair@123;TrustServerCertificate=True
-      Jwt__SecretKey:                "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
-      Jwt__Issuer:                   "auth-service"
-      Jwt__Audience:                 "microservices"
+        User Id=sa;Password=${SQL_SA_PASSWORD};TrustServerCertificate=True
+      Jwt__SecretKey:                "${JWT_SECRET_KEY}"
+      Jwt__Issuer:                   "${JWT_ISSUER}"
+      Jwt__Audience:                 "${JWT_AUDIENCE}"
       Jwt__AccessTokenExpiryMinutes: "15"
       Jwt__RefreshTokenExpiryDays:   "7"
     networks:
@@ -38,11 +38,11 @@ services:
     depends_on:
       - sqlserver
     restart: unless-stopped
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
-    #   interval: 15s
-    #   timeout: 5s
-    #   retries: 5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   mdx-service:
     image: ghcr.io/zoubairmabrouk/mdx-service:${MDX_VERSION}
@@ -52,7 +52,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
         Server=sqlserver,1433;Database=MdxDb;
-        User Id=sa;Password=$SQL_SA_PASSWORD;TrustServerCertificate=True
+        User Id=sa;Password=${SQL_SA_PASSWORD};TrustServerCertificate=True
       Jwt__SecretKey: "${JWT_SECRET_KEY}"
       Jwt__Issuer:    "${JWT_ISSUER}"
       Jwt__Audience:  "${JWT_AUDIENCE}"
@@ -70,7 +70,7 @@ services:
   rag-service:
     image: ghcr.io/zoubairmabrouk/rag-service:${AI_VERSION}
     expose:
-      - "8000"
+      - "8088"
     environment:
       JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
       JWT_ISSUER:     "${JWT_ISSUER}"
@@ -79,23 +79,6 @@ services:
       - microservices-net
     restart: unless-stopped
 
-  gateway:
-    image: ghcr.io/zoubairmabrouk/gateway-service:${GATEWAY_VERSION}
-    ports:
-      - "8088:8088"           # seul port exposé vers l'extérieur
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: "http://+:8088"
-      Jwt__SecretKey: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
-      Jwt__Issuer:    "auth-service"
-      Jwt__Audience:  "microservices"
-    networks:
-      - microservices-net
-    depends_on:
-      - auth-service
-      - mdx-service
-      - rag-service
-    restart: unless-stopped
   conv-service:
     image: ghcr.io/zoubairmabrouk/conv-service:${CONV_VERSION}
     expose:
@@ -104,20 +87,39 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
         Server=sqlserver,1433;Database=ConvDb;
-        User Id=sa;Password=$SQL_SA_PASSWORD;TrustServerCertificate=True
-      Jwt__SecretKey: "qsjhdhqsdhhuzhdhdgeudgudsgv,nfkuhzgezfuvjhknfjhsdbgvsqjhvvudsdfhvfuzbhjdqsjbddahugfu"
-      Jwt__Issuer:    "auth-service"
-      Jwt__Audience:  "microservices"
+        User Id=sa;Password=${SQL_SA_PASSWORD};TrustServerCertificate=True
+      Jwt__SecretKey: "${JWT_SECRET_KEY}"
+      Jwt__Issuer:    "${JWT_ISSUER}"
+      Jwt__Audience:  "${JWT_AUDIENCE}"
     networks:
       - microservices-net
     depends_on:
       - sqlserver
     restart: unless-stopped
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
-    #   interval: 15s
-    #   timeout: 5s
-    #   retries: 5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    image: ghcr.io/zoubairmabrouk/gateway-service:${GATEWAY_VERSION}
+    ports:
+      - "8088:8088"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS:          "http://+:8088"
+      JwtSettings__Issuer:      "${JWT_ISSUER}"
+      JwtSettings__Audience:    "${JWT_AUDIENCE}"
+      JwtSettings__Key:         "${JWT_SECRET_KEY}"
+    networks:
+      - microservices-net
+    depends_on:
+      - auth-service
+      - mdx-service
+      - rag-service
+      - conv-service
+    restart: unless-stopped
 
 volumes:
   sqlserver-data:
