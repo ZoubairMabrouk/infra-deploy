@@ -8,8 +8,6 @@ on:
       - '.env.prod'
       - 'docker-compose.prod.yml'
       - '.github/workflows/deploy.yml'
-
-  # Bonus : déclenchement manuel avec approbation prod
   workflow_dispatch:
     inputs:
       reason:
@@ -35,6 +33,8 @@ jobs:
           echo "mdx=$MDX_VERSION"         >> $GITHUB_OUTPUT
           echo "rag=$AI_VERSION"           >> $GITHUB_OUTPUT
           echo "gateway=$GATEWAY_VERSION" >> $GITHUB_OUTPUT
+          echo "conv=$CONV_VERSION"       >> $GITHUB_OUTPUT
+          echo "frontend=$FRONTEND_VERSION" >> $GITHUB_OUTPUT
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -46,40 +46,29 @@ jobs:
             set -e
             sudo mkdir -p /opt/deploy
             cd /opt/deploy
-
             echo "── Pulling latest infra config ──"
             if [ ! -d ".git" ]; then
               echo "Repository absent → clone initial"
-
               sudo git clone https://github.com/ZoubairMabrouk/infra-deploy.git .
-
             else
               echo "Repository existant → pull"
-
               sudo git reset --hard
               sudo git clean -fd
               sudo git pull origin main
             fi
             echo "── Login GHCR ──"
-
             echo "${{ secrets.GHCR_TOKEN }}" | sudo docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            
             echo "── Stopping current stack ──"
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml down
-
             echo "── Deleting old images ──"
             sudo docker image prune -f
-            
             echo "── Pulling Docker images ──"
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-
             echo "── Saving current stack state for rollback ──"
             sudo cp .env.prod .env.prod.bak
-
             echo "── Starting new stack ──"
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml \
               up -d --remove-orphans --wait --wait-timeout 120
-
             echo "── Healthcheck ──"
             sleep 10
             sudo docker compose --env-file .env.prod -f docker-compose.prod.yml ps --format json \
@@ -91,12 +80,11 @@ jobs:
                   up -d --remove-orphans
                 exit 1
               )
-
             echo "── Cleanup old images ──"
             sudo docker image prune -f
 
   notify-success:
-    name: 📬 Telegram — Succès
+    name: Telegram — Succès
     runs-on: ubuntu-latest
     needs: [deploy]
     if: success()
@@ -108,10 +96,9 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{
               "chat_id": "${{ secrets.TELEGRAM_CHAT_ID }}",
-              "text": "✅ *APP Déployé*\n\n🏷️ *Service* : TOUS\n📦 *Version* : `latest`\n👤 *Auteur* : ${{ github.actor }}\n📝 *SHA* : `${GITHUB_SHA::8}`\n🔗 [Voir workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+              "text": " *APP Déployé*\n\n *Service* : TOUS\n📦 *Version* : env.AUTH_VERSION\n *Auteur* : ${{ github.actor }}\n📝 *SHA* : `${GITHUB_SHA::8}`\n🔗 [Voir workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
               "parse_mode": "Markdown"
             }'
-
   notify-failure:
     name: 📬 Telegram — Échec
     runs-on: ubuntu-latest
