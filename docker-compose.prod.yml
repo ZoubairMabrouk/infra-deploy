@@ -22,7 +22,7 @@ services:
   auth-service:
     image: ghcr.io/zoubairmabrouk/auth-service:${AUTH_VERSION}
     expose:
-      - "8088"
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
@@ -39,7 +39,7 @@ services:
       - sqlserver
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -47,7 +47,7 @@ services:
   mdx-service:
     image: ghcr.io/zoubairmabrouk/mdx-service:${MDX_VERSION}
     expose:
-      - "8088"
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
@@ -62,7 +62,7 @@ services:
       - sqlserver
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -70,7 +70,7 @@ services:
   rag-service:
     image: ghcr.io/zoubairmabrouk/rag-service:${AI_VERSION}
     expose:
-      - "8088"
+      - "8080"
     environment:
       JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
       JWT_ISSUER:     "${JWT_ISSUER}"
@@ -82,7 +82,7 @@ services:
   conv-service:
     image: ghcr.io/zoubairmabrouk/conv-service:${CONV_VERSION}
     expose:
-      - "8088"
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
@@ -97,7 +97,7 @@ services:
       - sqlserver
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -105,10 +105,10 @@ services:
   gateway:
     image: ghcr.io/zoubairmabrouk/gateway-service:${GATEWAY_VERSION}
     ports:
-      - "8088:8088"
+      - "8088:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS:          "http://+:8088"
+      ASPNETCORE_URLS:          "http://+:8080"
       JwtSettings__Issuer:      "${JWT_ISSUER}"
       JwtSettings__Audience:    "${JWT_AUDIENCE}"
       JwtSettings__Key:         "${JWT_SECRET_KEY}"
@@ -119,6 +119,16 @@ services:
       - mdx-service
       - rag-service
       - conv-service
+    restart: unless-stopped
+  frontend:
+    image: ghcr.io/zoubairmabrouk/frontend:${FRONTEND_VERSION}
+    ports:
+      - "82:80"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS:          "http://+:82"
+    networks:
+      - microservices-net
     restart: unless-stopped
 
 volumes:
