@@ -96,7 +96,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{
               "chat_id": "${{ secrets.TELEGRAM_CHAT_ID }}",
-              "text": " *APP Déployé*\n\n *Service* : TOUS\n📦 *Version* : env.AUTH_VERSION\n *Auteur* : ${{ github.actor }}\n📝 *SHA* : `${GITHUB_SHA::8}`\n🔗 [Voir workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+              "text": "✅ *APP — Déploiement Réussi*\n\n👤 *Auteur* : ${{ github.actor }}\n📝 *SHA* : `${GITHUB_SHA::8}`\n🔗 *Workflow* : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "parse_mode": "Markdown"
             }'
   notify-failure:
