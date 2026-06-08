@@ -82,6 +82,8 @@ jobs:
               )
             echo "── Cleanup old images ──"
             sudo docker image prune -f
+            sudo ufw allow 8088/tcp
+            
 
   notify-success:
     name: Telegram — Succès
