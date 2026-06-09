@@ -22,7 +22,7 @@ services:
   auth-service:
     image: ghcr.io/zoubairmabrouk/auth-service:${AUTH_VERSION}
     expose:
-      - "8094:8080"
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
@@ -47,7 +47,7 @@ services:
   mdx-service:
     image: ghcr.io/zoubairmabrouk/mdx-service:${MDX_VERSION}
     expose:
-      - "8093:8080"
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
@@ -70,7 +70,7 @@ services:
   rag-service:
     image: ghcr.io/zoubairmabrouk/rag-service:${AI_VERSION}
     expose:
-      - "8092:8080"
+      - "8080"
     environment:
       JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
       JWT_ISSUER:     "${JWT_ISSUER}"
@@ -82,7 +82,7 @@ services:
   conv-service:
     image: ghcr.io/zoubairmabrouk/conv-service:${CONV_VERSION}
     expose:
-      - "8091:8080"
+      - "8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: >
@@ -105,7 +105,7 @@ services:
   gateway:
     image: ghcr.io/zoubairmabrouk/gateway-service:${GATEWAY_VERSION}
     ports:
-      - "8090:8080"
+      - "8088:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS:          "http://+:8080"
